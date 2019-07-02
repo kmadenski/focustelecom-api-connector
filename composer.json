@@ -1,0 +1,16 @@
+{
+    "name": "kmadenski/fcc-connector",
+    "authors": [
+        {
+            "name": "kmadenski",
+            "email": "s15540@pjwstk.edu.pl"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "minimum-stability": "stable"
+}
