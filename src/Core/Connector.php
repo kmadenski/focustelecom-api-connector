@@ -122,7 +122,7 @@ class Connector
         $authPostPart = $this->prepareAdminAuthPart();
 
         $body = array_merge($body, $authPostPart);
-
+        //print_r($body);exit;
         return $this->baseRequest($requestName, $body);
     }
 
@@ -136,8 +136,8 @@ class Connector
     private function consultantRequest($requestName, $body, $consultantLogin): string
     {
         $authPostPart = $this->prepareConsultantAuthPart($consultantLogin);
-        //print_r($authPostPart);exit;
         $body = array_merge($body, $authPostPart);
+        //print_r(json_encode($body, JSON_PRETTY_PRINT));exit;
 
         return $this->baseRequest($requestName, $body);
     }
@@ -178,9 +178,9 @@ class Connector
     }
     private function prepareAdminAuthPart(): array
     {
-        $login = $this->getAdminLoginWithDomain();
+        $login = $this->loginAdmin;
         return [
-            "login" => $login,
+            "login" => $this->getAdminLoginWithDomain(),
             "change" => $this->change,
             "hash" => $this->calcHash($login),
             "method" => $this->method,
@@ -188,9 +188,8 @@ class Connector
     }
     private function prepareConsultantAuthPart(string $login): array
     {
-        //$login = $this->getLoginWithDomain($login);
         return [
-            "login" => $login,
+            "login" => $this->getLoginWithDomain($login),
             "change" => $this->change,
             "hash" => $this->calcHash($login),
             "method" => $this->method,
