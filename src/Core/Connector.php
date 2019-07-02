@@ -6,11 +6,10 @@
  * Time: 12:59
  */
 
-namespace App\Core;
+namespace FocusConnector\Core;
 
-use App\Exception\ConnectionException;
-use App\Exception\HashFunctionNotDeclaredException;
-use App\Exception\WrongAuthRequestType;
+use FocusConnector\Exception\ConnectionException;
+use FocusConnector\Exception\HashFunctionNotDeclaredException;
 
 class Connector
 {

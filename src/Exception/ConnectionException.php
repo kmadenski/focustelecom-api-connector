@@ -6,7 +6,7 @@
  * Time: 14:05
  */
 
-namespace App\Exception;
+namespace FocusConnector\Exception;
 
 
 class ConnectionException extends \Exception

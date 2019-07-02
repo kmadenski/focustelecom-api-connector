@@ -5,7 +5,7 @@
  * Date: 01.07.19
  * Time: 13:04
  */
-namespace App\Exception;
+namespace FocusConnector\Exception;
 
 class HashFunctionNotDeclaredException extends \Exception
 {
