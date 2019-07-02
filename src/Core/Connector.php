@@ -10,11 +10,14 @@ namespace App\Core;
 
 use App\Exception\ConnectionException;
 use App\Exception\HashFunctionNotDeclaredException;
+use App\Exception\WrongAuthRequestType;
 
 class Connector
 {
     CONST MD5 = 'md5';
     private $loginAdmin;
+    private $consultantAdmin;
+
     private $apiKey;
     private $domain;
     private $change;
@@ -41,68 +44,114 @@ class Connector
 
     public function campaignList(): string {
         $post = [];
-        return $this->request("fcc-campaigns-list", $post);
+        return $this->adminRequest("fcc-campaigns-list", $post);
     }
     public function classifiersList($campaignId): string {
         $post = [
             "campaigns_id" => $campaignId
         ];
-        return $this->request("fcc-classifiers-list", $post);
+        return $this->adminRequest("fcc-classifiers-list", $post);
+    }
+    public function staffAgentList(): string {
+        $post = [];
+        return $this->adminRequest("fcc-staff-agents-list", $post);
     }
     public function addRecords($campaignId, array $records): string {
         $post = [
             "campaigns_id" => $campaignId,
             "records" => $records
         ];
-        return $this->request("fcc-add-records", $post);
+        return $this->adminRequest("fcc-add-records", $post);
     }
     public function updateRecords($campaignId, array $records): string {
         $post = [
             "campaigns_id" => $campaignId,
             "records" => $records
         ];
-        return $this->request("fcc-update-records", $post);
+        return $this->adminRequest("fcc-update-records", $post);
     }
     public function exportRecords($campaignId): string {
         $post = [
             "campaigns_id" => $campaignId,
         ];
-        return $this->request("fcc-export-records", $post);
+        return $this->adminRequest("fcc-export-records", $post);
     }
-    public function call($recordId): string {
+    public function call($recordId, $consultantName): string {
         $post = [
             "records_id" => $recordId,
         ];
-        return $this->request("fcc-call", $post);
+        return $this->consultantRequest("fcc-call", $post, $consultantName);
+    }
+    public function dropCall($callId, $consultantName){
+        $post = [
+            "calls_id" => $callId,
+        ];
+        return $this->consultantRequest("fcc-drop-call", $post, $consultantName);
     }
     /**
      * @return string
      * @throws HashFunctionNotDeclaredException
      */
-    private function getHash(): string
+    private function calcHash(string $login): string
     {
-        $str = $this->loginAdmin . $this->change . $this->apiKey;
+        $str = $login . $this->change . $this->apiKey;
         if ($this->isMd5()) {
             return md5($str);
         }
         throw new HashFunctionNotDeclaredException("Method hashowania jest błędna. Wartośc: " . $this->method);
     }
-
-    private function getLoginWithDomain(): string
-    {
-        return $this->loginAdmin . "@" . $this->domain;
+    private function getLoginWithDomain(string $login): string {
+        return $login."@".$this->domain;
     }
-
+    private function getAdminLoginWithDomain(): string
+    {
+        return $this->getLoginWithDomain($this->loginAdmin);
+    }
     private function isMd5(): bool
     {
         return $this->method == self::MD5;
     }
 
-    public function request($requestName, $body): string
+    /**
+     * @param $requestName
+     * @param $body
+     * @return string
+     * @throws ConnectionException
+     */
+    private function adminRequest($requestName, $body): string
     {
+        $authPostPart = $this->prepareAdminAuthPart();
 
+        $body = array_merge($body, $authPostPart);
+
+        return $this->baseRequest($requestName, $body);
+    }
+
+    /**
+     * @param $requestName
+     * @param $body
+     * @param $consultantLogin
+     * @return string
+     * @throws ConnectionException
+     */
+    private function consultantRequest($requestName, $body, $consultantLogin): string
+    {
+        $authPostPart = $this->prepareConsultantAuthPart($consultantLogin);
+        //print_r($authPostPart);exit;
+        $body = array_merge($body, $authPostPart);
+
+        return $this->baseRequest($requestName, $body);
+    }
+
+    /**
+     * @param string $requestName
+     * @param array $body
+     * @return string
+     * @throws ConnectionException
+     */
+    private function baseRequest(string $requestName, array $body): string {
         $curl = curl_init();
-
+        //echo json_encode($body,JSON_PRETTY_PRINT);exit;
         curl_setopt_array($curl, array(
             CURLOPT_URL => $this->baseUrl . $requestName,
             CURLOPT_RETURNTRANSFER => true,
@@ -111,7 +160,7 @@ class Connector
             CURLOPT_TIMEOUT => 30,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => json_encode(array_merge($body, $this->prepareBodyAuthPart())),
+            CURLOPT_POSTFIELDS => json_encode($body),
             CURLOPT_HTTPHEADER => array(
                 "Content-Type: application/json",
                 "cache-control: no-cache,no-cache"
@@ -128,13 +177,23 @@ class Connector
             return $response;
         }
     }
-
-    private function prepareBodyAuthPart(): array
+    private function prepareAdminAuthPart(): array
     {
+        $login = $this->getAdminLoginWithDomain();
         return [
-            "login" => $this->getLoginWithDomain(),
+            "login" => $login,
             "change" => $this->change,
-            "hash" => $this->getHash(),
+            "hash" => $this->calcHash($login),
+            "method" => $this->method,
+        ];
+    }
+    private function prepareConsultantAuthPart(string $login): array
+    {
+        //$login = $this->getLoginWithDomain($login);
+        return [
+            "login" => $login,
+            "change" => $this->change,
+            "hash" => $this->calcHash($login),
             "method" => $this->method,
         ];
     }
