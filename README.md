@@ -1,6 +1,6 @@
 ## Install
 ``` bash
-composer require kmadenski/focustelecom-api-connector
+composer require kmadenski/fcc-connector
 ```
 ## Usage
 ```php
