@@ -87,6 +87,30 @@ class Connector
         ];
         return $this->consultantRequest("fcc-drop-call", $post, $consultantName);
     }
+    public function createJwtToken($consultantName){
+        return $this->consultantRequest('fcc-create-jwt-token', [], $consultantName);
+    }
+    public function staffActivity($consultantName, \stdClass $activity){
+        $body = [
+            "activity" => $activity
+        ];
+        return $this->consultantRequest('fcc-staff-activity', $body, $consultantName);
+    }
+    public function staffNumberList($consultantName){
+        $body = [
+            "filters" => [
+                "is_public" => 0
+            ]
+        ];
+        return $this->consultantRequest('fcc-staff-numbers-list', $body, $consultantName);
+    }
+    public function sipBinding($consultantName, $sip = "random"){
+        $body = [
+            "sip" => $sip
+        ];
+        return $this->consultantRequest('fcc-sip-bindings', $body, $consultantName);
+
+    }
     /**
      * @return string
      * @throws HashFunctionNotDeclaredException
@@ -150,7 +174,7 @@ class Connector
      */
     private function baseRequest(string $requestName, array $body): string {
         $curl = curl_init();
-        //echo json_encode($body,JSON_PRETTY_PRINT);exit;
+
         curl_setopt_array($curl, array(
             CURLOPT_URL => $this->baseUrl . $requestName,
             CURLOPT_RETURNTRANSFER => true,
